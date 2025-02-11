@@ -39,7 +39,6 @@ const __m256 MIN_QUANT= _mm256_set1_ps(MIN_Q);
 const __m256 SCALE= _mm256_set1_ps(SCALE_FACTOR);
 const __m256 ROUND= _mm256_set1_ps(ROUND_FACTOR);
 
-
 static inline __m256 clamp(__m256 n, __m256 min, __m256 max){
     return _mm256_max_ps(min, _mm256_min_ps(max, n));
 }
@@ -131,6 +130,116 @@ int16_t dotproduct_q8_8(int16_t* w_q8_8, int16_t* x_q8_8, int size){
     }
     return static_cast<int16_t>(sum_q16_16 >> 8);
 }
+
+template <typename T> 
+class alignedVector{
+    private: 
+        size_t size_m;
+        T* ptr_m;
+
+    public:
+        explicit alignedVector(size_t size): size_m(size), ptr_m(nullptr){
+            ptr_m= static_cast<T*>(std::aligned_alloc(32, size*sizeof(T)));
+            if(!ptr_m){
+                throw std::bad_alloc();
+            }
+        }
+        
+        alignedVector(size_t alignment, size_t size): size_m(size), ptr_m(nullptr){
+            ptr_m= static_cast<T*>(std::aligned_alloc(alignment, size*sizeof(T)));
+            if (!ptr_m){
+                throw std::bad_alloc();
+            }
+        }
+
+        alignedVector(): size_m(0), ptr_m(nullptr){};
+
+        alignedVector(const alignedVector&)= delete;
+        alignedVector& operator=(const alignedVector&)= delete;
+
+        alignedVector(alignedVector&& other) noexcept: size_m(other.size_m), ptr_m(other.ptr_m){
+            other.ptr_m= nullptr;
+            other.size_m= 0;
+        }
+
+        alignedVector& operator=(alignedVector&& other) noexcept {
+            if (this != &other){
+                free(ptr_m);
+                ptr_m= other.ptr_m;
+                size_m= other.size_m;
+                other.ptr_m= nullptr;
+                other.size_m= 0;
+            }
+            return *this;
+        }
+
+        ~alignedVector(){
+            free(ptr_m);
+        }
+
+        T* data() const {
+            return ptr_m;
+        }
+        
+        size_t size() const {
+            return size_m;
+        }
+
+        const T& operator [] (size_t index) const {
+            assert(index < size_m && "Index out of bounds");
+            return *(ptr_m + index);
+        }
+
+        T& operator [] (size_t index) {
+            assert(index < size_m && "Index out of bounds");
+            return *(ptr_m + index);
+        }
+
+};
+
+struct AdamWParams{
+    const float beta1;
+    const float beta2;
+    const float beta1_complement;
+    const float beta2_complement;
+    float beta1i;
+    float beta2i;
+    const float decay;
+    const float learning_rate;
+    const float eps;
+
+    alignedVector<float> moment1;
+    alignedVector<float> moment2;
+
+    AdamWParams(size_t size): 
+        learning_rate(1e-3f), 
+        beta1(0.9f),
+        beta2(0.999f),
+        beta1_complement(0.1f),
+        beta2_complement(1e-3f),
+        beta1i(0.9f), 
+        beta2i(0.999f),
+        decay(0.99999f), 
+        eps(1e-8f),
+        moment1(size), 
+        moment2(size)
+    {   
+        __m256 zeros= _mm256_setzero_ps();
+
+        size_t i= 0;
+        for(; i <= size; i+= 8){
+            _mm256_store_ps(moment1.data() + i, zeros);
+            _mm256_store_ps(moment2.data() + i, zeros);
+        }
+
+        for(; i < size; i++){
+            moment1[i]= 0.0f;   
+            moment2[i]= 0.0f;
+        }
+            
+    }
+        
+};
 
 #include <random>
 #include <chrono>
