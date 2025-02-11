@@ -2,7 +2,6 @@
 #include <array>
 #include <cmath>
 #include <iostream>
-#include <sys/mman.h>
 
 constexpr float MAX_Q= 127.9940f;
 constexpr float MIN_Q= -128.0f;
@@ -114,6 +113,7 @@ int16_t dotproduct_q8_8(int16_t* w_q8_8, int16_t* x_q8_8, int size){
         __m256i vec2_w_q8_8 = _mm256_load_si256((__m256i*)&w_q8_8[i+ 16]);
         __m256i vec2_x_q8_8 = _mm256_load_si256((__m256i*)&x_q8_8[i+ 16]);
         __m256i dot2= _mm256_madd_epi16(vec2_w_q8_8, vec2_x_q8_8);
+
         __m256i prod= _mm256_add_epi32(dot1, dot2);
         vec_sum_q16_16 = _mm256_add_epi32(vec_sum_q16_16, prod);
     }
