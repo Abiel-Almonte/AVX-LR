@@ -1,5 +1,6 @@
 //Functions with scalar implementations
-#include <cmath>
+#pragma once
+#include <cstddef>
 
 float dotproduct_scalar(float* w, float* x, size_t size);
 

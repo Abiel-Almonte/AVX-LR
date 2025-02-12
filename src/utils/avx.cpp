@@ -1,3 +1,4 @@
+#include "tools.hh"
 #include "avx.hh"
 
 void quantize8_8_inplace(float* v, int16_t* q, size_t size){

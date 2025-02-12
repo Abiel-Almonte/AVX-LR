@@ -1,4 +1,4 @@
-#include "tools.hh"
+#pragma once
 
 //Use when size%32 != 0 for the best preformance
 void quantize8_8_inplace(float* v, int16_t* q, size_t size);

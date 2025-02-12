@@ -1,4 +1,5 @@
 #include "scalar.hh"
+#include <cmath>
 
 float dotproduct_scalar(float* w, float* x, size_t size) {
     float prod= 0.0f;
