@@ -7,7 +7,7 @@
 #include <random>
 #include <chrono>
 
-void analyze_timings(std::vector<double> timings, const char* title){
+void analyze_timings(std::vector<double>& timings, const char* title){
      if (timings.empty()) {
         std::cout << "No data provided for " << title << std::endl;
         return;
@@ -26,7 +26,7 @@ void analyze_timings(std::vector<double> timings, const char* title){
     std::cout << "99th Percentile (P99): " << p99 << " ns" << std::endl;
 }
 
-void analyze_errors(std::vector<double> errors, const char* title) {
+void analyze_errors(std::vector<double>& errors, const char* title) {
     if (errors.empty()) {
         std::cout << "No error data provided for " << title << std::endl;
         return;
@@ -45,6 +45,28 @@ void analyze_errors(std::vector<double> errors, const char* title) {
     std::cout << "99th Percentile Absolute Error (P99): " << p99 << std::endl;
 }
 
+void analyze_p95_speedup(std::vector<double>& timings, std::vector<double>& relativeTo, const char* title){
+    if (timings.empty() || relativeTo.empty()) {
+        std::cout << "No timing data provided for " << title << std::endl;
+        return;
+    }
+
+    std::sort(timings.begin(), timings.end());
+    std::sort(relativeTo.begin(), relativeTo.end());
+    double timings_p95= timings[static_cast<int>(timings.size()*0.95)];
+    double relativeTo_p95= relativeTo[static_cast<int>(relativeTo.size()* 0.95)];
+    double speedup= (relativeTo_p95/timings_p95);
+
+    std::cout << "===== " << title << " P95 Speed Comparision =====" << std::endl;
+    double multiplier= std::pow(10, 2);
+    if (speedup < 1){ 
+        std::cout <<  std::round(1/speedup * multiplier)/multiplier << "x slowdown" << std::endl; 
+    }
+    else{
+        std::cout << std::round(speedup* multiplier)/ multiplier << "x speedup" << std::endl;
+    }
+
+}
 
 
 template <size_t feature_size>
@@ -79,8 +101,8 @@ void benchmark_inference(int iterations) {
     std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
     std::chrono::duration<double> duration;
 
-        for (int i = 0; i < iterations; i++) { 
-            for (size_t i = 0; i < feature_size; i++) {
+    for (int i = 0; i <= iterations; i++) { 
+        for (size_t i = 0; i < feature_size; i++) {
             float rand_w = dist_weights(mt);
             float rand_x = dist_inputs(mt);
 
@@ -98,44 +120,56 @@ void benchmark_inference(int iterations) {
         float scalar_output = sigmoid_fp(dotproduct_scalar(scalar_weights.data(), scalar_inputs.data(), feature_size));
         end = std::chrono::high_resolution_clock::now();
         duration = end - start;
-        scalar_latency.push_back(duration.count() * 1e9);
+        
+        if (i > 0){scalar_latency.push_back(duration.count() * 1e9);}
+
+        accumulation= accumulation+ scalar_output;
 
         start = std::chrono::high_resolution_clock::now();
         int16_t avx_output_q8_8 = sigmoidApprox_fp_to_q8_8(dotproduct_fp(avx_weights.data(), avx_inputs.data(), feature_size));
         end = std::chrono::high_resolution_clock::now();
         duration = end - start;
-        avx_latency.push_back(duration.count() * 1e9);
-        float avx_output_fp= q8_8_to_float(avx_output_q8_8);
-        accumulation += avx_output_fp;
-        absolute_errors_fp.push_back(std::fabs(avx_output_fp - scalar_output));
         
+        if (i > 0){avx_latency.push_back(duration.count() * 1e9);}
+        float avx_output_fp= q8_8_to_float(avx_output_q8_8);
+        if (i > 0){absolute_errors_fp.push_back(std::fabs(avx_output_fp - scalar_output));}
+        
+        accumulation= accumulation + avx_output_fp;
+
         start = std::chrono::high_resolution_clock::now();
         int16_t avx_q8_8_output = sigmoidApprox_q8_8(dotproduct_q8_8(avx_q8_8_weights.data(), avx_q8_8_inputs.data(), feature_size));
         end = std::chrono::high_resolution_clock::now();
         duration = end - start;
-        avx_q8_8_latency.push_back(duration.count() * 1e9);
+        
+        if (i > 0){avx_q8_8_latency.push_back(duration.count() * 1e9);}
         float avx_q8_8_output_fp = q8_8_to_float(avx_q8_8_output);
-        accumulation += avx_q8_8_output_fp;
-        absolute_errors_q8_8.push_back(std::fabs(avx_q8_8_output_fp - scalar_output));
-
-        accumulation += scalar_output;
+        if (i > 0){absolute_errors_q8_8.push_back(std::fabs(avx_q8_8_output_fp - scalar_output));}
+        
+        accumulation= accumulation + avx_q8_8_output_fp;
     }
 
+    std::cout << "===== " << feature_size << " Features =====" << std::endl;
+    std::cout << std::endl;
     analyze_timings(scalar_latency, "Scalar FP32 Inference");
     analyze_timings(avx_latency, "AVX FP32 Inference");
     analyze_timings(avx_q8_8_latency, "AVX Q(8.8) Inference");
     std::cout << std::endl;
-    analyze_errors(absolute_errors_q8_8, "AVX Q(8.8) Error");
-    analyze_errors(absolute_errors_fp, "AVX FP32 Error");
+    analyze_errors(absolute_errors_q8_8, "AVX Q(8.8) vs Scalar");
+    analyze_errors(absolute_errors_fp, "AVX FP32 vs Scalar");
     std::cout << std::endl;
-
+    analyze_p95_speedup(avx_q8_8_latency, scalar_latency, "AVX Q(8.8) vs Scalar");
+    analyze_p95_speedup(avx_latency, scalar_latency, "AVX FP32 vs Scalar");
+    analyze_p95_speedup(avx_q8_8_latency, avx_latency, "AVX Q(8.8) vs AVX FP32");
+    std::cout << std::endl;
 }
 
 
 int main() {
 
     benchmark_inference<32>(1e6);
+    benchmark_inference<64>(1e6);
+    benchmark_inference<1024>(1e6);
     benchmark_inference<4096>(1e6);
-    benchmark_inference<8192>(1e6);
+    //benchmark_inference<8192>(1e6);
     return 0;
 }
