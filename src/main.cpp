@@ -170,6 +170,6 @@ int main() {
     benchmark_inference<64>(1e6);
     benchmark_inference<1024>(1e6);
     benchmark_inference<4096>(1e6);
-    //benchmark_inference<8192>(1e6);
+    benchmark_inference<8192>(1e6);
     return 0;
 }
