@@ -32,8 +32,8 @@ int16_t dotproduct_q8_8(int16_t* w_q8_8, int16_t* x_q8_8, size_t size){
     __m256i vec_sum_q16_16 = _mm256_setzero_si256();
     size_t i = 0;
     for(; i + 32 <= size; i += 32){ 
-        _mm_prefetch(reinterpret_cast<const char*>(&w_q8_8[i+ 128]), _MM_HINT_T0);
-        _mm_prefetch(reinterpret_cast<const char*>(&x_q8_8[i+ 128]), _MM_HINT_T0);
+        _mm_prefetch(reinterpret_cast<const char*>(&w_q8_8[i+ 64]), _MM_HINT_T0);
+        _mm_prefetch(reinterpret_cast<const char*>(&x_q8_8[i+ 64]), _MM_HINT_T0);
 
         __m256i vec1_w_q8_8 = _mm256_load_si256((__m256i*)&w_q8_8[i]);
         __m256i vec1_x_q8_8 = _mm256_load_si256((__m256i*)&x_q8_8[i]);
@@ -58,22 +58,23 @@ int16_t dotproduct_q8_8(int16_t* w_q8_8, int16_t* x_q8_8, size_t size){
     for(; i < size; i++){
         sum_q16_16 += w_q8_8[i] * x_q8_8[i];
     }
-    return static_cast<int16_t>(sum_q16_16 >> 8);
+    int16_t sum_q8_8= static_cast<int16_t>(sum_q16_16 >> 8);
+    return clamp(sum_q8_8, static_cast<int16_t>(MINQ * SCALE_FACTOR), static_cast<int16_t>(MAXQ * SCALE_FACTOR));
 }
 
 float dotproduct_fp(float* w_fp, float* x_fp, size_t size){
     __m256 vec_sum_fp= _mm256_setzero_ps();
     size_t i = 0;
-    for(; i + 32<= size; i += 32){ 
-        _mm_prefetch(reinterpret_cast<const char*>(&w_fp[i+ 64]), _MM_HINT_T0);
-        _mm_prefetch(reinterpret_cast<const char*>(&x_fp[i+ 64]), _MM_HINT_T0);
+    for(; i + 16<= size; i += 16){ 
+        _mm_prefetch(reinterpret_cast<const char*>(&w_fp[i+ 32]), _MM_HINT_T0);
+        _mm_prefetch(reinterpret_cast<const char*>(&x_fp[i+ 32]), _MM_HINT_T0);
 
         __m256 vec1_w_fp = _mm256_load_ps(&w_fp[i]);
         __m256 vec1_x_fp = _mm256_load_ps(&x_fp[i]);
         __m256 dot1= _mm256_fmadd_ps(vec1_w_fp, vec1_x_fp, _mm256_setzero_ps());
 
-        __m256 vec2_w_fp = _mm256_load_ps(&w_fp[i+ 16]);
-        __m256 vec2_x_fp = _mm256_load_ps(&x_fp[i+ 16]);
+        __m256 vec2_w_fp = _mm256_load_ps(&w_fp[i+ 8]);
+        __m256 vec2_x_fp = _mm256_load_ps(&x_fp[i+ 8]);
         __m256 dot2= _mm256_fmadd_ps(vec2_w_fp, vec2_x_fp, _mm256_setzero_ps());
 
         __m256 prod= _mm256_add_ps(dot1, dot2);
