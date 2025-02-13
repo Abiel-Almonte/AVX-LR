@@ -1,25 +1,6 @@
 ### **AVX Q8.8 vs. AVX FP32 vs. Scalar FP32 - Performance Summary**
-#### GNU/Linux Ubuntu - Intel Core i7 14700k ( 3.4 GHz ) | Inference Benchmark
-> **Note**: 95th percentile (**P95**) represents the **worst-case** for 95% of the observed inference runs.
-
-<div align="center">
-
-#### **Speedup Comparison (P95)**
-| Feature Size | AVX Q8.8 vs. Scalar | AVX FP32 vs. Scalar | AVX Q8.8 vs. AVX FP32 |
-|-----------------|---------------------------------|--------------------------------|--------------------------------|
-| 32  | 2.18x  | 1.85x  | 1.18x  |
-| 64  | 2.56x  | 2.00x  | 1.29x  |
-| 1024  | 11.56x  | 7.15x  | 1.62x  |
-| 4096  | 13.90x  | 6.18x  | <span style="color:green"> **2.25x** </span> |
-| 8192  | 15.27x  | 7.94x  | 1.92x  |
-| 16384  | 16.43x  | 8.38x  | 1.96x  |
-| 32768  | <span style="color:green"> **16.64x**  </span>  | <span style="color:green">  **8.38x** </span>  | 1.99x  |
-
-![speedupGraph](./images/speedupGraph.png)
-
-</div>
-
----
+#### x86-64 Linux - Intel Core i7 14700k ( 3.4 GHz ) | Inference Benchmark
+> **Note**: 95th percentile (**P95**) represents the worst-case latency for 95% of the 1 million inference runs.
 
 <div align="center">
 
@@ -35,6 +16,25 @@
 | 32768  | 12.10 µs  |  <span style="color:red">  **1.44 µs**  </span> | 727 ns |
 
 ![latencyGraph](./images/latencyGraph.png)
+
+</div>
+
+---
+
+<div align="center">
+
+#### **Speedup Comparison (P95)**
+| Feature Size | AVX Q8.8 vs. Scalar | AVX FP32 vs. Scalar | AVX Q8.8 vs. AVX FP32 |
+|-----------------|---------------------------------|--------------------------------|--------------------------------|
+| 32  | 2.18x  | 1.85x  | 1.18x  |
+| 64  | 2.56x  | 2.00x  | 1.29x  |
+| 1024  | 11.56x  | 7.15x  | 1.62x  |
+| 4096  | 13.90x  | 6.18x  | <span style="color:green"> **2.25x** </span> |
+| 8192  | 15.27x  | 7.94x  | 1.92x  |
+| 16384  | 16.43x  | 8.38x  | 1.96x  |
+| 32768  | <span style="color:green"> **16.64x**  </span>  | <span style="color:green">  **8.38x** </span>  | 1.99x  |
+
+![speedupGraph](./images/speedupGraph.png)
 
 </div>
 
