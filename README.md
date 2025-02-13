@@ -1,7 +1,6 @@
 ### **AVX Q8.8 vs. AVX FP32 vs. Scalar FP32 - Performance Summary**
 #### GNU/Linux Ubuntu - Intel Core i7 14700k ( 3.4 GHz ) | Inference Benchmark
-> [!NOTE]  
-> **P95** (95th percentile) represents the **worst-case** for 95% of the observed inference runs.
+> **Note**: 95th percentile (**P95**) represents the **worst-case** for 95% of the observed inference runs.
 
 <div align="center">
 
