@@ -22,7 +22,7 @@ static inline __m256 clamp(__m256 n, __m256 min, __m256 max){
 }
 
 static inline float clamp(float n, float min, float max){
-    return  std::max(min, std::min(max, n));
+    return std::fmaxf(min, std::fminf(max, n));
 }
 
 static inline int16_t clamp(int16_t n, int16_t min, int16_t max){
