@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12.)
 
-project(logisitcRegression VERSION 1.0.0 DESCRIPTION "A low latency implementation of Logistic Regession" LANGUAGES CXX)
+project(logisitcRegression VERSION 1.0.0 DESCRIPTION "A low latency implementation of logistic regression" LANGUAGES CXX)
 set(PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
 
 message(STATUS "Project Name: ${PROJECT_NAME}")
