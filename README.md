@@ -5,7 +5,7 @@
 <div align="center">
 
 #### **Speedup Comparison (P95)**
-| Feature Size | AVX Q(8.8) vs. Scalar | AVX FP32 vs. Scalar | AVX Q(8.8) vs. AVX FP32 |
+| Feature Size | AVX Q8.8 vs. Scalar | AVX FP32 vs. Scalar | AVX Q8.8 vs. AVX FP32 |
 |-----------------|---------------------------------|--------------------------------|--------------------------------|
 | 32  | 2.18x  | 1.85x  | 1.18x  |
 | 64  | 2.56x  | 2.00x  | 1.29x  |
@@ -24,7 +24,7 @@
 <div align="center">
 
 #### **Latency Comparison (P95)**
-| **Feature Size** | Scalar FP32 | AVX FP32 | AVX Q(8.8) |
+| **Feature Size** | Scalar FP32 | AVX FP32 | AVX Q8.8 |
 |-----------------|-----------------|----------------|----------------|
 | 32  | 48 ns  | 26 ns | 22 ns |
 | 64  |  <span style="color:green">  **44 ns** </span>  | <span style="color:green">  **22 ns** </span>  | <span style="color:green">  **17 ns** </span> |
