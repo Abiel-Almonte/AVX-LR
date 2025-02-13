@@ -1,11 +1,11 @@
 ### **AVX Q8.8 vs. AVX FP32 vs. Scalar FP32 - Performance Summary**
 #### **GNU/Linux Ubuntu: Intel Core i7 14700k 3.4 GHz | Logistic Regression Inference Benchmark**
-> [!NOTE]  
-> Values highlighted in <span style="color:green">**green**</span> represent the best preformance.  
-> Values highlighted in <span style="color:red">**red**</span> indicate the worst performance/ threshold for suboptimal performance.  
-> **P95** (95th percentile) represents the **worst-case** for 95% of the observed inference runs.
+> [!NOTE]  **P95** (95th percentile) represents the **worst-case** for 95% of the observed inference runs.
+
+<div align="center">
+
 #### **Speedup Comparison (P95)**
-| Feature Size | AVX Q8.8 vs. Scalar (Speedup) | AVX FP32 vs. Scalar (Speedup) | AVX Q8.8 vs. AVX FP32 (Speedup) |
+| Feature Size | AVX Q8.8 vs. Scalar | AVX FP32 vs. Scalar | AVX Q8.8 vs. AVX FP32 |
 |-----------------|---------------------------------|--------------------------------|--------------------------------|
 | 32  | 2.18x  | 1.85x  | 1.18x  |
 | 64  | 2.56x  | 2.00x  | 1.29x  |
@@ -15,7 +15,12 @@
 | 16384  | 16.43x  | 8.38x  | 1.96x  |
 | 32768  | <span style="color:green"> **16.64x**  </span>  | <span style="color:green">  **8.38x** </span>  | 1.99x  |
 
+![speedupGraph](./images/speedupGraph.png)
+
+</div>
 ---
+
+<div align="center">
 
 #### **Latency Comparison (P95)**
 | **Feature Size** | Scalar FP32 | AVX FP32 | AVX Q8.8 |
@@ -28,7 +33,12 @@
 | 16384  | 6.10 µs  | 728 ns  | 371 ns  |
 | 32768  | 12.10 µs  |  <span style="color:red">  **1.44 µs**  </span> | 727 ns |
 
+![latencyGraph](./images/latencyGraph.png)
+
+</div>
 ---
+
+<div align="center">
 
 #### **Absolute Error Comparison (P95)**
 | **Feature Size** | **AVX Q8.8 vs. Scalar** | AVX FP32 vs. Scalar |
@@ -40,3 +50,5 @@
 | 8192  | 1.34e-2  | 2.72e-3 |
 | 16384  | 1.20e-2  |  <span style="color:red">  **1.91e-3**  </span> |
 | 32768  |  <span style="color:red">  **3.95e-2** </span> | 5.32e-3  |
+
+</div>
