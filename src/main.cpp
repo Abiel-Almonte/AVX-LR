@@ -68,9 +68,8 @@ void analyze_p95_speedup(std::vector<double>& timings, std::vector<double>& rela
 
 }
 
-
 template <size_t feature_size>
-void benchmark_inference(int iterations) {
+void benchmark_inference(int iterations, int reps) {
     alignedArray<int16_t> avx_q8_8_weights(feature_size);
     alignedArray<int16_t> avx_q8_8_inputs(feature_size);
 
@@ -97,55 +96,70 @@ void benchmark_inference(int iterations) {
     absolute_errors_fp.reserve(iterations);
 
     volatile float accumulation = 0.0f;
-    
     std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
-    std::chrono::duration<double> duration;
 
-    for (int i = 0; i <= iterations; i++) { 
-        for (size_t i = 0; i < feature_size; i++) {
-            float rand_w = dist_weights(mt);
-            float rand_x = dist_inputs(mt);
+    for (int w = 0; w < 100; w++) {
+        for (size_t j = 0; j < feature_size; j++) {
+            float rw= dist_weights(mt);
+            float rx= dist_inputs(mt);
+            scalar_weights[j]= rw;
+            scalar_inputs[j]= rx;
+            avx_weights.data()[j]= rw;
+            avx_inputs.data()[j]= rx;
+        }
+        quantize8_8_inplace(scalar_weights.data(), avx_q8_8_weights.data(), feature_size);
+        quantize8_8_inplace(scalar_inputs.data(),  avx_q8_8_inputs.data(),  feature_size);
+        accumulation+= sigmoid_fp(dotproduct_scalar(scalar_weights.data(), scalar_inputs.data(), feature_size));
+        accumulation+= q8_8_to_float(sigmoidApprox_fp_to_q8_8(dotproduct_fp(avx_weights.data(), avx_inputs.data(), feature_size)));
+        accumulation+= q8_8_to_float(sigmoidApprox_q8_8(dotproduct_q8_8(avx_q8_8_weights.data(), avx_q8_8_inputs.data(), feature_size)));
+    }
 
-            scalar_weights[i] = rand_w;
-            scalar_inputs[i]  = rand_x;
-            
-            avx_weights[i] = rand_w;
-            avx_inputs[i]  = rand_x;
+    for (int iter = 0; iter < iterations; iter++) {
+        for (size_t j = 0; j < feature_size; j++) {
+            float rand_w= dist_weights(mt);
+            float rand_x= dist_inputs(mt);
+            scalar_weights[j]= rand_w;
+            scalar_inputs[j]= rand_x;
+            avx_weights.data()[j]= rand_w;
+            avx_inputs.data()[j]= rand_x;
         }
 
         quantize8_8_inplace(scalar_weights.data(), avx_q8_8_weights.data(), feature_size);
         quantize8_8_inplace(scalar_inputs.data(),  avx_q8_8_inputs.data(),  feature_size);
 
-        start = std::chrono::high_resolution_clock::now();
-        float scalar_output = sigmoid_fp(dotproduct_scalar(scalar_weights.data(), scalar_inputs.data(), feature_size));
-        end = std::chrono::high_resolution_clock::now();
-        duration = end - start;
-        
-        if (i > 0){scalar_latency.push_back(duration.count() * 1e9);}
-
-        accumulation= accumulation+ scalar_output;
-
-        start = std::chrono::high_resolution_clock::now();
-        int16_t avx_output_q8_8 = sigmoidApprox_fp_to_q8_8(dotproduct_fp(avx_weights.data(), avx_inputs.data(), feature_size));
-        end = std::chrono::high_resolution_clock::now();
-        duration = end - start;
-        
-        if (i > 0){avx_latency.push_back(duration.count() * 1e9);}
-        float avx_output_fp= q8_8_to_float(avx_output_q8_8);
-        if (i > 0){absolute_errors_fp.push_back(std::fabs(avx_output_fp - scalar_output));}
-        
-        accumulation= accumulation + avx_output_fp;
+        auto start= std::chrono::high_resolution_clock::now();
+        float scalar_result = 0.0f;
+        for (int r= 0; r < reps; r++) {
+            scalar_result += sigmoid_fp(dotproduct_scalar(scalar_weights.data(), scalar_inputs.data(), feature_size));
+        }
+        auto end= std::chrono::high_resolution_clock::now();
+        double scalar_time= std::chrono::duration<double>(end - start).count() / reps;
+        scalar_latency.push_back(scalar_time * 1e9);
+        accumulation+= scalar_result;
 
         start = std::chrono::high_resolution_clock::now();
-        int16_t avx_q8_8_output = sigmoidApprox_q8_8(dotproduct_q8_8(avx_q8_8_weights.data(), avx_q8_8_inputs.data(), feature_size));
+        int16_t avx_result_q8_8 = 0;
+        for (int r= 0; r < reps; r++) {
+            avx_result_q8_8+= sigmoidApprox_fp_to_q8_8(dotproduct_fp(avx_weights.data(), avx_inputs.data(), feature_size));
+        }
         end = std::chrono::high_resolution_clock::now();
-        duration = end - start;
-        
-        if (i > 0){avx_q8_8_latency.push_back(duration.count() * 1e9);}
-        float avx_q8_8_output_fp = q8_8_to_float(avx_q8_8_output);
-        if (i > 0){absolute_errors_q8_8.push_back(std::fabs(avx_q8_8_output_fp - scalar_output));}
-        
-        accumulation= accumulation + avx_q8_8_output_fp;
+        double avx_time= std::chrono::duration<double>(end - start).count() / reps;
+        avx_latency.push_back(avx_time * 1e9);
+        float avx_result_fp= q8_8_to_float(avx_result_q8_8);
+        absolute_errors_fp.push_back(std::fabs((avx_result_fp - scalar_result) / reps));
+        accumulation += avx_result_fp;
+
+        start = std::chrono::high_resolution_clock::now();
+        int16_t avx_q8_8_result= 0;
+        for (int r= 0; r < reps; r++) {
+            avx_q8_8_result+= sigmoidApprox_q8_8(dotproduct_q8_8(avx_q8_8_weights.data(), avx_q8_8_inputs.data(), feature_size));
+        }
+        end= std::chrono::high_resolution_clock::now();
+        double avx_q8_8_time= std::chrono::duration<double>(end - start).count() / reps;
+        avx_q8_8_latency.push_back(avx_q8_8_time * 1e9);
+        float avx_q8_8_result_fp= q8_8_to_float(avx_q8_8_result);
+        absolute_errors_q8_8.push_back(std::fabs((avx_q8_8_result_fp - scalar_result) / reps));
+        accumulation+= avx_q8_8_result_fp;
     }
 
     std::cout << "===== " << feature_size << " Features =====" << std::endl;
@@ -161,15 +175,19 @@ void benchmark_inference(int iterations) {
     analyze_p95_speedup(avx_latency, scalar_latency, "AVX FP32 vs Scalar");
     analyze_p95_speedup(avx_q8_8_latency, avx_latency, "AVX Q(8.8) vs AVX FP32");
     std::cout << std::endl;
+    std::cout << "Accumulation (to avoid optimization): " << accumulation << std::endl;
 }
 
 
 int main() {
 
-    benchmark_inference<32>(1e6);
-    benchmark_inference<64>(1e6);
-    benchmark_inference<1024>(1e6);
-    benchmark_inference<4096>(1e6);
-    benchmark_inference<8192>(1e6);
+    benchmark_inference<32>(1e6, 100);
+    benchmark_inference<64>(1e6, 100);
+    benchmark_inference<1024>(1e6, 100);
+    benchmark_inference<4096>(1e6, 100);
+    benchmark_inference<8192>(1e6, 100);
+    benchmark_inference<16384>(1e6, 100);
+    benchmark_inference<32768>(1e6, 100);
+    
     return 0;
 }
