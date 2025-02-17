@@ -6,11 +6,15 @@
 #include <iostream>
 #include <random>
 #include <chrono>
+#include <nlohmann/json.hpp>
 
-void analyze_timings(std::vector<double>& timings, const char* title){
-     if (timings.empty()) {
-        std::cout << "No data provided for " << title << std::endl;
-        return;
+using json = nlohmann::json;
+
+json analyze_timings(std::vector<double>& timings, const std::string& title){
+    json result; 
+    if (timings.empty()) {
+        result["error"]= "No data provided for " + title;
+        return result;
     }
     
     std::sort(timings.begin(), timings.end());
@@ -19,17 +23,20 @@ void analyze_timings(std::vector<double>& timings, const char* title){
     double p95= timings[static_cast<int>(timings.size()*0.95)];
     double p99= timings[static_cast<int>(timings.size()*0.99)];
 
-    std::cout << "===== "<< title << " Speed Benchmark =====" << std::endl;
-    std::cout << "Median Latency  (P50): " << median << " ns" << std::endl;
-    std::cout << "Mean Latency    (Avg): " << mean << " ns" << std::endl;
-    std::cout << "95th Percentile (P95): " << p95 << " ns" << std::endl;
-    std::cout << "99th Percentile (P99): " << p99 << " ns" << std::endl;
+    result["title"]= title;
+    result["median_ns"]= median;
+    result["mean_ns"]= mean;
+    result["p95_ns"]= p95;
+    result["p99_ns"]= p99;
+
+    return result;
 }
 
-void analyze_errors(std::vector<double>& errors, const char* title) {
+json analyze_errors(std::vector<double>& errors, const std::string& title) {
+    json result;
     if (errors.empty()) {
-        std::cout << "No error data provided for " << title << std::endl;
-        return;
+        result["error"]= "No data provided for " + title;
+        return result;
     }
     
     std::sort(errors.begin(), errors.end());
@@ -38,17 +45,20 @@ void analyze_errors(std::vector<double>& errors, const char* title) {
     double p95 = errors[static_cast<int>(errors.size() * 0.95)];
     double p99 = errors[static_cast<int>(errors.size() * 0.99)];
 
-    std::cout << "===== " << title << " Error Benchmark =====" << std::endl;
-    std::cout << "Median Absolute Error (P50): " << median << std::endl;
-    std::cout << "Mean Absolute Error   (Avg): " << mean << std::endl;
-    std::cout << "95th Percentile Absolute Error (P95): " << p95 << std::endl;
-    std::cout << "99th Percentile Absolute Error (P99): " << p99 << std::endl;
+    result["title"]= title;
+    result["median_error"]= median;
+    result["mean_error"]= mean;
+    result["p95_error"]= p95;
+    result["p99_error"]= p99;
+
+    return result;
 }
 
-void analyze_p95_speedup(std::vector<double>& timings, std::vector<double>& relativeTo, const char* title){
+json analyze_p95_speedup(std::vector<double>& timings, std::vector<double>& relativeTo, const std::string& title){
+    json result;
     if (timings.empty() || relativeTo.empty()) {
-        std::cout << "No timing data provided for " << title << std::endl;
-        return;
+        result["error"]= "No data provided for " + title;
+        return result;
     }
 
     std::sort(timings.begin(), timings.end());
@@ -57,19 +67,20 @@ void analyze_p95_speedup(std::vector<double>& timings, std::vector<double>& rela
     double relativeTo_p95= relativeTo[static_cast<int>(relativeTo.size()* 0.95)];
     double speedup= (relativeTo_p95/timings_p95);
 
-    std::cout << "===== " << title << " P95 Speed Comparision =====" << std::endl;
+    result["title"]= title;
     double multiplier= std::pow(10, 2);
     if (speedup < 1){ 
-        std::cout <<  std::round(1/speedup * multiplier)/multiplier << "x slowdown" << std::endl; 
+        result["x slowdown"]= std::round(1/speedup * multiplier)/multiplier;
     }
     else{
-        std::cout << std::round(speedup* multiplier)/ multiplier << "x speedup" << std::endl;
+        result["x speedup"]=  std::round(speedup* multiplier)/ multiplier;
     }
 
+    return result;
 }
 
 template <size_t feature_size>
-void benchmark_inference(int iterations, int reps) {
+json benchmark_inference(int iterations, int reps) {
     alignedArray<int16_t> avx_q8_8_weights(feature_size);
     alignedArray<int16_t> avx_q8_8_inputs(feature_size);
 
@@ -162,32 +173,35 @@ void benchmark_inference(int iterations, int reps) {
         accumulation+= avx_q8_8_result_fp;
     }
 
-    std::cout << "===== " << feature_size << " Features =====" << std::endl;
-    std::cout << std::endl;
-    analyze_timings(scalar_latency, "Scalar FP32 Inference");
-    analyze_timings(avx_latency, "AVX FP32 Inference");
-    analyze_timings(avx_q8_8_latency, "AVX Q(8.8) Inference");
-    std::cout << std::endl;
-    analyze_errors(absolute_errors_q8_8, "AVX Q(8.8) vs Scalar");
-    analyze_errors(absolute_errors_fp, "AVX FP32 vs Scalar");
-    std::cout << std::endl;
-    analyze_p95_speedup(avx_q8_8_latency, scalar_latency, "AVX Q(8.8) vs Scalar");
-    analyze_p95_speedup(avx_latency, scalar_latency, "AVX FP32 vs Scalar");
-    analyze_p95_speedup(avx_q8_8_latency, avx_latency, "AVX Q(8.8) vs AVX FP32");
-    std::cout << std::endl;
+    json benchmark_results;
+    benchmark_results["Scalar_FP32_latency"]= analyze_timings(scalar_latency, "Scalar FP32 Inference");
+    benchmark_results["AVX_FP32_latency"]= analyze_timings(avx_latency, "AVX FP32 Inference");
+    benchmark_results["AVX_Q88_latency"]= analyze_timings(avx_q8_8_latency, "AVX Q(8.8) Inference");
+    benchmark_results["AVX_Q88_Error"]= analyze_errors(absolute_errors_q8_8, "AVX Q(8.8) vs Scalar");
+    benchmark_results["AVX_FP32_Error"]= analyze_errors(absolute_errors_fp, "AVX FP32 vs Scalar");
+    benchmark_results["AVX_Q88_Scalar_Speedup"]= analyze_p95_speedup(avx_q8_8_latency, scalar_latency, "AVX Q(8.8) vs Scalar");
+    benchmark_results["AVX_FP32_Scalar_Speedup"]= analyze_p95_speedup(avx_latency, scalar_latency, "AVX FP32 vs Scalar");
+    benchmark_results["AVX_Q88_Fp32_Speedup"]= analyze_p95_speedup(avx_q8_8_latency, avx_latency, "AVX Q(8.8) vs AVX FP32");
     std::cout << "Accumulation (to avoid optimization): " << accumulation << std::endl;
+
+    return benchmark_results;
 }
 
+#include <fstream>
 
 int main() {
+    std::ofstream file("data.json");
+    json data;
 
-    benchmark_inference<32>(1e6, 100);
-    benchmark_inference<64>(1e6, 100);
-    benchmark_inference<1024>(1e6, 100);
-    benchmark_inference<4096>(1e6, 100);
-    benchmark_inference<8192>(1e6, 100);
-    benchmark_inference<16384>(1e6, 100);
-    benchmark_inference<32768>(1e6, 100);
+    data["32"]= benchmark_inference<32>(1e6, 100);
+    data["64"]= benchmark_inference<64>(1e6, 100);
+    data["1024"]= benchmark_inference<1024>(1e6, 100);
+    data["4096"]= benchmark_inference<4096>(1e6, 100);
+    data["8192"]= benchmark_inference<8192>(1e6, 100);
+    data["16384"]= benchmark_inference<16384>(1e6, 100);
+    data["32768"]= benchmark_inference<32768>(1e6, 100);
     
+    file << data.dump(4);
+    file.close();
     return 0;
 }
