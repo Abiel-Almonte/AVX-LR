@@ -29,7 +29,7 @@ void quantize8_8_inplace(float* v, int16_t* q, size_t size){
     }
 }
 
-int16_t dotproduct_q8_8(int16_t* w_q8_8, int16_t* x_q8_8, size_t size){
+int32_t dotproduct_q8_8(int16_t* w_q8_8, int16_t* x_q8_8, size_t size){
     __m256i vec_sum_q16_16 = _mm256_setzero_si256();
     size_t i = 0;
     for(; i + 32 <= size; i += 32){ 
@@ -59,8 +59,8 @@ int16_t dotproduct_q8_8(int16_t* w_q8_8, int16_t* x_q8_8, size_t size){
     for(; i < size; i++){
         sum_q16_16 += w_q8_8[i] * x_q8_8[i];
     }
-    int16_t sum_q8_8= static_cast<int16_t>(sum_q16_16 >> 8);
-    return clamp(sum_q8_8, static_cast<int16_t>(MINQ * SCALE_FACTOR), static_cast<int16_t>(MAXQ * SCALE_FACTOR));
+
+    return sum_q16_16;
 }
 
 float dotproduct_fp(float* w_fp, float* x_fp, size_t size){

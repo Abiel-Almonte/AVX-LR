@@ -163,7 +163,7 @@ json benchmark_inference(int iterations, int reps) {
         start = std::chrono::high_resolution_clock::now();
         int16_t avx_q8_8_result= 0;
         for (int r= 0; r < reps; r++) {
-            avx_q8_8_result+= sigmoidApprox_q8_8(dotproduct_q8_8(avx_q8_8_weights.data(), avx_q8_8_inputs.data(), feature_size));
+            avx_q8_8_result+= sigmoidApprox_q16_16_to_q8_8(dotproduct_q8_8(avx_q8_8_weights.data(), avx_q8_8_inputs.data(), feature_size));
         }
         end= std::chrono::high_resolution_clock::now();
         double avx_q8_8_time= std::chrono::duration<double>(end - start).count() / reps;
