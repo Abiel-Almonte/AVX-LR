@@ -189,7 +189,7 @@ json benchmark_inference(int iterations, int reps) {
 }
 
 template <size_t feature_size>
-json benchmark_update(int iterations, int reps){
+json benchmark_sgd(int iterations, int reps){
     alignedArray<float> avx_weights(feature_size);
     alignedArray<float> avx_inputs(feature_size);
     std::array<float, feature_size> scalar_weights{};
@@ -260,8 +260,9 @@ json benchmark_update(int iterations, int reps){
     }
 
     json benchmark_results;
-    benchmark_results["Scalar_FP32_SGD"]= analyze_timings(scalar_latency, "Scalar FP32 SGD");
-    benchmark_results["AVX_FP32_SGD"]= analyze_timings(avx_latency, "AVX FP32 SGD");
+    benchmark_results["Scalar_FP32_Latency"]= analyze_timings(scalar_latency, "Scalar FP32 SGD");
+    benchmark_results["AVX_FP32_Latency"]= analyze_timings(avx_latency, "AVX FP32 SGD");
+    benchmark_results["AVX_FP32_Scalar_speedup"]= analyze_p95_speedup(avx_latency, scalar_latency, "AVX FP32 vs Scalar");
 
     return benchmark_results;
 }
@@ -269,13 +270,13 @@ json benchmark_update(int iterations, int reps){
 int main() {
     std::ofstream SGD_Benchmark("SGD_Benchmark.json");
     json data_SGD;
-    data_SGD["32"]= benchmark_update<32>(1e6, 100);
-    data_SGD["64"]= benchmark_update<64>(1e6, 100);
-    data_SGD["1024"]= benchmark_update<1024>(1e6, 100);
-    data_SGD["4096"]= benchmark_update<4096>(1e6, 100);
-    data_SGD["8192"]= benchmark_update<8192>(1e6, 100);
-    data_SGD["16384"]= benchmark_update<16384>(1e6, 100);
-    data_SGD["32768"]= benchmark_update<32768>(1e6, 100);
+    data_SGD["32"]= benchmark_sgd<32>(1e6, 100);
+    data_SGD["64"]= benchmark_sgd<64>(1e6, 100);
+    data_SGD["1024"]= benchmark_sgd<1024>(1e6, 100);
+    data_SGD["4096"]= benchmark_sgd<4096>(1e6, 100);
+    data_SGD["8192"]= benchmark_sgd<8192>(1e6, 100);
+    data_SGD["16384"]= benchmark_sgd<16384>(1e6, 100);
+    data_SGD["32768"]= benchmark_sgd<32768>(1e6, 100);
 
     SGD_Benchmark << data_SGD.dump(4);
     SGD_Benchmark.close();
