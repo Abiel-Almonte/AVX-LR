@@ -4,6 +4,7 @@
 #include "utils/scalar.hh"
 
 #include <iostream>
+#include <fstream>
 #include <random>
 #include <chrono>
 #include <nlohmann/json.hpp>
@@ -187,21 +188,111 @@ json benchmark_inference(int iterations, int reps) {
     return benchmark_results;
 }
 
-#include <fstream>
+template <size_t feature_size>
+json benchmark_update(int iterations, int reps){
+    alignedArray<float> avx_weights(feature_size);
+    alignedArray<float> avx_inputs(feature_size);
+    std::array<float, feature_size> scalar_weights{};
+    std::array<float, feature_size> scalar_inputs{};
+
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_real_distribution<float> dist(-1, 1);
+
+    std::vector<double> scalar_latency{};
+    std::vector<double> avx_latency{};
+    scalar_latency.reserve(iterations);
+    avx_latency.reserve(iterations);
+
+    for(int i= 0; i < 100; i ++){
+        for(size_t j= 0; j < feature_size; j ++){
+            float rand_w= dist(mt);
+            float rand_x= dist(mt);
+
+            avx_weights[j]= rand_w;
+            avx_inputs[j]= rand_x;
+
+            scalar_weights[j]= rand_w;
+            scalar_inputs[j]= rand_x;
+        }
+
+        float y= dist(mt);
+        float y_hat= dist(mt);
+
+        auto avx_weights_copy= avx_weights.deepCopy();
+        auto scalar_weights_copy= scalar_weights;
+
+        update_sgd_inplace(y_hat, y, avx_weights_copy.data(), avx_inputs.data(), feature_size, 0.001);
+        update_sgd_inplace_scalar(y_hat, y, scalar_weights_copy.data(), scalar_inputs.data(), feature_size, 0.001);
+    }
+
+    for (int i = 0; i < iterations; i ++){
+        for(size_t j= 0; j < feature_size; j ++){
+            float rand_w= dist(mt);
+            float rand_x= dist(mt);
+
+            avx_weights[j]= rand_w;
+            avx_inputs[j]=  rand_x;
+
+            scalar_weights[j]= rand_w;
+            scalar_inputs[j]= rand_x;
+        }
+
+        float y= dist(mt);
+        float y_hat= dist(mt);
+
+        auto avx_weights_copy= avx_weights.deepCopy();
+        auto scalar_weights_copy= scalar_weights;
+
+        auto start= std::chrono::high_resolution_clock::now();
+        for (int r= 0; r < reps; r++){
+            update_sgd_inplace(y_hat, y, avx_weights_copy.data(), avx_inputs.data(), feature_size, 0.001);
+        }
+        auto end= std::chrono::high_resolution_clock::now();
+        avx_latency.push_back(std::chrono::duration<double, std::nano>(end - start).count() / reps);
+
+        start= std::chrono::high_resolution_clock::now();
+        for (int r= 0; r < reps; r++){
+            update_sgd_inplace_scalar(y_hat, y, scalar_weights_copy.data(), scalar_inputs.data(), feature_size, 0.001);
+        }
+        end= std::chrono::high_resolution_clock::now();
+        scalar_latency.push_back(std::chrono::duration<double, std::nano>(end - start).count() / reps);
+    }
+
+    json benchmark_results;
+    benchmark_results["Scalar_FP32_SGD"]= analyze_timings(scalar_latency, "Scalar FP32 SGD");
+    benchmark_results["AVX_FP32_SGD"]= analyze_timings(avx_latency, "AVX FP32 SGD");
+
+    return benchmark_results;
+}
 
 int main() {
-    std::ofstream file("data.json");
-    json data;
+    std::ofstream SGD_Benchmark("SGD_Benchmark.json");
+    json data_SGD;
+    data_SGD["32"]= benchmark_update<32>(1e6, 100);
+    data_SGD["64"]= benchmark_update<64>(1e6, 100);
+    data_SGD["1024"]= benchmark_update<1024>(1e6, 100);
+    data_SGD["4096"]= benchmark_update<4096>(1e6, 100);
+    data_SGD["8192"]= benchmark_update<8192>(1e6, 100);
+    data_SGD["16384"]= benchmark_update<16384>(1e6, 100);
+    data_SGD["32768"]= benchmark_update<32768>(1e6, 100);
 
-    data["32"]= benchmark_inference<32>(1e6, 100);
-    data["64"]= benchmark_inference<64>(1e6, 100);
-    data["1024"]= benchmark_inference<1024>(1e6, 100);
-    data["4096"]= benchmark_inference<4096>(1e6, 100);
-    data["8192"]= benchmark_inference<8192>(1e6, 100);
-    data["16384"]= benchmark_inference<16384>(1e6, 100);
-    data["32768"]= benchmark_inference<32768>(1e6, 100);
-    
-    file << data.dump(4);
-    file.close();
+    SGD_Benchmark << data_SGD.dump(4);
+    SGD_Benchmark.close();
+
+    std::ofstream Inference_Benchmark("Inference_Benchmark.json");
+    json data_Inf;
+
+    data_Inf["32"]= benchmark_inference<32>(1e6, 100);
+    data_Inf["64"]= benchmark_inference<64>(1e6, 100);
+    data_Inf["1024"]= benchmark_inference<1024>(1e6, 100);
+    data_Inf["4096"]= benchmark_inference<4096>(1e6, 100);
+    data_Inf["8192"]= benchmark_inference<8192>(1e6, 100);
+    data_Inf["16384"]= benchmark_inference<16384>(1e6, 100);
+    data_Inf["32768"]= benchmark_inference<32768>(1e6, 100);
+
+    Inference_Benchmark << data_Inf.dump(4);
+    Inference_Benchmark.close();
+
     return 0;
 }
