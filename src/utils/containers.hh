@@ -1,8 +1,7 @@
 #pragma once
 
-#include <cstring>
 #include <stdlib.h>
-#include <stddef.h>
+#include <cstring>
 #include <stdexcept>
 #include <cassert>
 
