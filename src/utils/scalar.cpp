@@ -15,7 +15,7 @@ float sigmoid_scalar(float x){
     return 1.0f/(1.0f + std::exp(-x));
 }
 
-void update_sgd_inplace_scalar(float y_hat, float y, float* w, float* x, size_t size, float lr){
+void sgd_inplace_scalar(float y_hat, float y, float* w, float* x, size_t size, float lr){
     float neg_coeff= lr*(y - y_hat);
     
     for (size_t i = 0; i < size; i++){
