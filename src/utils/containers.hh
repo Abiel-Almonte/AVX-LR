@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdexcept>
@@ -38,7 +39,9 @@ class alignedArray{
 
         alignedArray& operator=(alignedArray&& other) noexcept {
             if (this != &other){
-                free(ptr_m);
+                if (ptr_m){
+                    free(ptr_m);
+                }
                 ptr_m= other.ptr_m;
                 size_m= other.size_m;
                 other.ptr_m= nullptr;
@@ -46,6 +49,12 @@ class alignedArray{
             }
             return *this;
         }
+
+        alignedArray<T> deepCopy() const{
+            alignedArray<T> copy(size_m);
+            std::memcpy(copy.data(), ptr_m, size_m* sizeof(T));
+            return copy;
+        }        
 
         ~alignedArray(){
             free(ptr_m);
