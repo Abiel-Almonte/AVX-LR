@@ -9,5 +9,6 @@ int32_t dotproduct_q8_8(int16_t* w_q8_8, int16_t* x_q8_8, size_t size);
 
 float dotproduct_fp(float* w_fp, float* x_fp, size_t size);
 
-float adamW_delta_fp(int16_t y_hat, float* w_fp, float* x_fp, size_t size, AdamWParams& parmas);
-__m256 sgd_delta_fp(int16_t y_hat, float y, float* x_fp, size_t size, float lr);
+void update_sgd_inplace(int16_t y_hat, float y, float* w_fp, float* x_fp, size_t size, float lr);
+
+void update_adamW_inplace(int16_t y_hat, float y, float* w_fp, float* x_fp, size_t size, AdamWParams& parmas);

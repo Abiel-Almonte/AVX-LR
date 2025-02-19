@@ -97,25 +97,38 @@ float dotproduct_fp(float* w_fp, float* x_fp, size_t size){
 }
 
 //delta= lr * (y_hat - y)x^T
-__m256 sgd_delta_fp(int16_t y_hat, float y, float* x_fp, size_t size, float lr){
-    float* delta;
-    float coeff= lr*(y_hat- y);
-    __m256 vec_coeff= _mm256_broadcast_ss(&coeff); 
+void update_sgd_inplace(int16_t y_hat, float y, float* w_fp, float* x_fp, size_t size, float lr){
+    float neg_coeff= lr*(y-y_hat);
+    __m256 vec_neg_coeff= _mm256_broadcast_ss(&neg_coeff); 
 
     size_t i= 0;    
     for (; i < size ; i += 16){
 
         _mm_prefetch(reinterpret_cast<const char*>(&x_fp[i + 32]), _MM_HINT_T0);
+        _mm_prefetch(reinterpret_cast<const char*>(&w_fp[i + 32]), _MM_HINT_T0);
         
         __m256 vec1_x_fp= _mm256_load_ps(&x_fp[i]);
         __m256 vec2_x_fp= _mm256_load_ps(&x_fp[i+8]);
+        __m256 vec1_w_fp= _mm256_load_ps(&w_fp[i]);
+        __m256 vec2_w_fp= _mm256_load_ps(&w_fp[i+8]);
 
-        __m256 vec1_delta= _mm256_mul_ps(vec_coeff, vec1_x_fp);
-        __m256 vec2_delta= _mm256_mul_ps(vec_coeff, vec2_x_fp);
-        
+        __m256 vec1_delta= _mm256_mul_ps(vec_neg_coeff, vec1_x_fp);
+        __m256 vec2_delta= _mm256_mul_ps(vec_neg_coeff, vec2_x_fp);
 
+        __m256 vec1_w_fp_new= _mm256_add_ps(vec1_delta, vec1_w_fp);
+        __m256 vec2_w_fp_new= _mm256_add_ps(vec2_delta, vec2_w_fp);
+
+        _mm256_store_ps(&w_fp[i], vec1_w_fp_new);
+        _mm256_store_ps(&w_fp[i + 8], vec2_w_fp_new);
     }
 
+    for (; i < size; i ++){
+        w_fp[i]+= neg_coeff*x_fp[i];
+    }
+}
 
+//refer to pseudocode
+void update_adamW_inplace(int16_t y_hat, float y, float* w_fp, float* x_fp, size_t size, AdamWParams& parmas){
+    return;
 }
 
