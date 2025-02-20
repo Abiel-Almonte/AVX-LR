@@ -232,7 +232,8 @@ json benchmark_sgd(int iterations, int reps){
         auto avx_weights_copy= avx_weights.deepCopy();
         auto scalar_weights_copy= scalar_weights;
 
-        sgd_inplace(y_hat, y, avx_weights_copy.data(), avx_inputs.data(), feature_size, 0.001);
+        int16_t y_hat_q8_8= float_to_q8_8(y_hat);
+        sgd_inplace(y_hat_q8_8, y, avx_weights_copy.data(), avx_inputs.data(), feature_size, 0.001);
         sgd_inplace_scalar(y_hat, y, scalar_weights_copy.data(), scalar_inputs.data(), feature_size, 0.001);
     }
 
@@ -255,8 +256,9 @@ json benchmark_sgd(int iterations, int reps){
         auto scalar_weights_copy= scalar_weights;
 
         auto start= std::chrono::high_resolution_clock::now();
+        int16_t y_hat_q8_8= float_to_q8_8(y_hat);
         for (int r= 0; r < reps; r++){
-            sgd_inplace(y_hat, y, avx_weights_copy.data(), avx_inputs.data(), feature_size, 0.001);
+            sgd_inplace(y_hat_q8_8, y, avx_weights_copy.data(), avx_inputs.data(), feature_size, 0.001);
         }
         auto end= std::chrono::high_resolution_clock::now();
         avx_latency.push_back(std::chrono::duration<double, std::nano>(end - start).count() / reps);
@@ -270,7 +272,7 @@ json benchmark_sgd(int iterations, int reps){
 
         avx_weights_copy= avx_weights.deepCopy();
         scalar_weights_copy= scalar_weights;
-        sgd_inplace(y_hat, y, avx_weights_copy.data(), avx_inputs.data(), feature_size, 0.001);
+        sgd_inplace(y_hat_q8_8, y, avx_weights_copy.data(), avx_inputs.data(), feature_size, 0.001);
         sgd_inplace_scalar(y_hat, y, scalar_weights_copy.data(), scalar_inputs.data(), feature_size, 0.001);
 
         float sum_abs_diff= 0.0f;
