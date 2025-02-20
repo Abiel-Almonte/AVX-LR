@@ -98,7 +98,7 @@ float dotproduct_fp(float* w_fp, float* x_fp, size_t size){
 
 //delta= lr * (y_hat - y)x^T
 void sgd_inplace(int16_t y_hat, float y, float* w_fp, float* x_fp, size_t size, float lr){
-    float neg_coeff= lr*(y-y_hat);
+    float neg_coeff= lr*(y- q8_8_to_float(y_hat));
     __m256 vec_neg_coeff= _mm256_broadcast_ss(&neg_coeff); 
 
     size_t i= 0;    
