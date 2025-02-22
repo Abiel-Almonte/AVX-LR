@@ -23,7 +23,7 @@ void SGDLogisticRegression::setLearningRate(float learning_rate){
 }
 
 void SGDLogisticRegression::setInputs(float* x){
-    int i= 0;
+    size_t i= 0;
     for (; i + 16 <= feature_size_m; i += 16){
         _mm_prefetch(reinterpret_cast<const char*>(&x[i + 32]), _MM_HINT_T0);
 
