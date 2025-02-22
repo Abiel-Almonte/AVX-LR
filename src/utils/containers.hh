@@ -94,8 +94,7 @@ struct AdamWParams{
     alignedArray<float> moment1;
     alignedArray<float> moment2;
 
-    AdamWParams(size_t size);
-    AdamWParams(size_t size, float lr);
+    AdamWParams(size_t size, float lr = 0.001);
 
     private:
         AdamWParams();
