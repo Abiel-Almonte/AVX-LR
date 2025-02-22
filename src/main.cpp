@@ -183,9 +183,9 @@ json benchmark_inference(int iterations, int reps) {
     }
 
     json benchmark_results;
-    benchmark_results["Scalar_FP32_latency"]= analyze_timings(scalar_latency, "Scalar FP32 Inference");
-    benchmark_results["AVX_FP32_latency"]= analyze_timings(avx_latency, "AVX FP32 Inference");
-    benchmark_results["AVX_Q88_latency"]= analyze_timings(avx_q8_8_latency, "AVX Q(8.8) Inference");
+    benchmark_results["Scalar_FP32_Latency"]= analyze_timings(scalar_latency, "Scalar FP32 Inference");
+    benchmark_results["AVX_FP32_Latency"]= analyze_timings(avx_latency, "AVX FP32 Inference");
+    benchmark_results["AVX_Q88_Latency"]= analyze_timings(avx_q8_8_latency, "AVX Q(8.8) Inference");
     benchmark_results["AVX_Q88_Error"]= analyze_errors(absolute_errors_q8_8, "AVX Q(8.8) vs Scalar");
     benchmark_results["AVX_FP32_Error"]= analyze_errors(absolute_errors_fp, "AVX FP32 vs Scalar");
     benchmark_results["AVX_Q88_Scalar_Speedup"]= analyze_p95_speedup(avx_q8_8_latency, scalar_latency, "AVX Q(8.8) vs Scalar");
@@ -286,8 +286,8 @@ json benchmark_sgd(int iterations, int reps){
     json benchmark_results;
     benchmark_results["Scalar_FP32_Latency"]= analyze_timings(scalar_latency, "Scalar FP32 SGD");
     benchmark_results["AVX_FP32_Latency"]= analyze_timings(avx_latency, "AVX FP32 SGD");
-    benchmark_results["AVX_FP32_Scalar_speedup"]= analyze_p95_speedup(avx_latency, scalar_latency, "AVX FP32 vs Scalar");
-    benchmark_results["AVX_FP32_error"]= analyze_errors(avx_fp_error, "AVX FP32 Error");
+    benchmark_results["AVX_FP32_Scalar_Speedup"]= analyze_p95_speedup(avx_latency, scalar_latency, "AVX FP32 vs Scalar");
+    benchmark_results["AVX_FP32_Error"]= analyze_errors(avx_fp_error, "AVX FP32 Error");
 
     return benchmark_results;
 }
