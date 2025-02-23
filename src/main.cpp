@@ -295,15 +295,19 @@ json benchmark_sgd(int iterations, int reps){
 int main() {
     std::ofstream SGD_Benchmark("SGD_Benchmark.json");
     json data_SGD;
-    data_SGD["32"]= benchmark_sgd<32>(1e6, 100);
-    data_SGD["64"]= benchmark_sgd<64>(1e6, 100);
-    /*
-    data_SGD["1024"]= benchmark_sgd<1024>(1e6, 100);
-    data_SGD["4096"]= benchmark_sgd<4096>(1e6, 100);
-    data_SGD["8192"]= benchmark_sgd<8192>(1e6, 100);
-    data_SGD["16384"]= benchmark_sgd<16384>(1e6, 100);
-    data_SGD["32768"]= benchmark_sgd<32768>(1e6, 100);
-    */
+
+    data_SGD["16"]= benchmark_sgd<16>(1e5, 100);
+    data_SGD["32"]= benchmark_sgd<32>(1e5, 100);
+    data_SGD["64"]= benchmark_sgd<64>(1e5, 100);
+    data_SGD["128"]= benchmark_sgd<128>(1e5, 100);
+    data_SGD["256"]= benchmark_sgd<256>(1e5, 100);
+    data_SGD["512"]= benchmark_sgd<512>(1e5, 100);
+    data_SGD["1024"]= benchmark_sgd<1024>(1e5, 100);
+    data_SGD["2048"]= benchmark_sgd<2048>(1e5, 100);
+    data_SGD["4096"]= benchmark_sgd<4096>(1e5, 100);
+    data_SGD["8192"]= benchmark_sgd<8192>(1e5, 100);
+    data_SGD["16384"]= benchmark_sgd<16384>(1e5, 100);
+    data_SGD["32768"]= benchmark_sgd<32768>(1e5, 100);
 
     SGD_Benchmark << data_SGD.dump(4);
     SGD_Benchmark.close();
@@ -311,15 +315,18 @@ int main() {
     std::ofstream Inference_Benchmark("Inference_Benchmark.json");
     json data_Inf;
 
-    data_Inf["32"]= benchmark_inference<32>(1e6, 100);
-    data_Inf["64"]= benchmark_inference<64>(1e6, 100);
-    /*
-    data_Inf["1024"]= benchmark_inference<1024>(1e6, 100);
-    data_Inf["4096"]= benchmark_inference<4096>(1e6, 100);
-    data_Inf["8192"]= benchmark_inference<8192>(1e6, 100);
-    data_Inf["16384"]= benchmark_inference<16384>(1e6, 100);
-    data_Inf["32768"]= benchmark_inference<32768>(1e6, 100);
-    */
+    data_Inf["16"]= benchmark_inference<16>(1e5, 100);
+    data_Inf["32"]= benchmark_inference<32>(1e5, 100);
+    data_Inf["64"]= benchmark_inference<64>(1e5, 100);
+    data_Inf["128"]= benchmark_inference<128>(1e5, 100);
+    data_Inf["256"]= benchmark_inference<256>(1e5, 100);
+    data_Inf["512"]= benchmark_inference<512>(1e5, 100);
+    data_Inf["1024"]= benchmark_inference<1024>(1e5, 100);
+    data_Inf["2048"]= benchmark_inference<2048>(1e5, 100);
+    data_Inf["4096"]= benchmark_inference<4096>(1e5, 100);
+    data_Inf["8192"]= benchmark_inference<8192>(1e5, 100);
+    data_Inf["16384"]= benchmark_inference<16384>(1e5, 100);
+    data_Inf["32768"]= benchmark_inference<32768>(1e5, 100);
 
     Inference_Benchmark << data_Inf.dump(4);
     Inference_Benchmark.close();
