@@ -1,60 +1,100 @@
-### **AVX Q8.8 vs. AVX FP32 vs. Scalar FP32 - Performance Summary**
-#### x86-64 Linux - Intel Core i7 14700k ( 3.4 GHz ) | Inference Benchmark
-> **Note**: The 95th percentile (**P95**) represents the worst-case latency for 95% of 1 million inference runs, where each individual run is averaged over 100 executions to minimize measurement overhead.
-<div align="center">
 
-#### **Latency Comparison (P95)**
-| **Feature Size** | Scalar FP32 | AVX FP32 | AVX Q8.8 |
-|-----------------|-----------------|----------------|----------------|
-| 32  | <span style="color:green"> **10.46 ns** </span>  | <span style="color:green"> **3.07 ns**  </span> |  <span style="color:green">  **2.18 ns** </span> |
-| 64  |  23.18 ns | 4.14 ns | 2.53 ns |
-| 1024  | 364.64 ns  | 41.45 ns  | 22.62 ns |
-| 4096  |  <span style="color:red">  **1.49 µs**  </span> | 147.14 ns  | 64.42 ns  |
-| 8192  | 2.99 µs  | 348.55 ns  | 123.15 ns  |
-| 16384  | 6.06 µs  | 707.94 ns  | 330.01 ns  |
-| 32768  | 12.07 µs  |  <span style="color:red">  **1.42 µs**  </span> | 668.44 ns |
+## AVX-LR
+AVX-LR is my [AVX2-optimized](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions) logistic regression model designed for low-latency inference and updates. Implementing [Q8.8 quantization](https://en.wikipedia.org/wiki/Q_(number_format)), vectorized operations, and a precomputed sigmoid LUT to achieve nanosecond-scale performance.
 
-![latencyGraph](./images/latencyGraph.png)
+**This benchmark measures**:  
+- **Inference latency** (*forward pass*)  
+- **SGD update latency** (*backward pass*)  
+- **Speedup** (*vs. scalar FP32 (naive)*)  
+- **Error** (*absolute difference*)
 
-</div>
+Unlike the naive scalar approach, AVX-LR maintains sub-microsecond performance even at large feature sizes, achieving up to **24.06× speedup**.
 
 ---
 
+## x86-64 Linux - Intel Core i7 14700k (3.4 GHz) | Micro-benchmark
+
+> **Note:** The 95th percentile (**P95**) represents the worst-case latency for 95% of inference runs. Each individual run is averaged over multiple executions to minimize measurement overhead.
+
+### Latency Comparison (P95)
+<table>
+  <tr>
+    <th rowspan="2">Feature Size</th>
+    <th colspan="3">Inference Benchmark</th>
+    <th colspan="2">SGD Benchmark</th>
+  </tr>
+  <tr>
+    <th>Scalar FP32</th>
+    <th>AVX FP32</th>
+    <th>AVX Q8.8</th>
+    <th>Scalar FP32</th>
+    <th>AVX FP32</th>
+  </tr>
+  <tr>
+    <td><strong>32</strong></td>
+    <td>10.48 ns</td>
+    <td>2.63 ns<br><small>(3.98×)</small></td>
+    <td><strong>1.99 ns<br><small>(5.27×)</small></strong></td>
+    <td>8.53 ns</td>
+    <td><strong>2.14 ns<br><small>(3.99×)</small></strong></td>
+  </tr>
+  <tr>
+    <td><strong>64</strong></td>
+    <td>23.14 ns</td>
+    <td>3.46 ns<br><small>(6.69×)</small></td>
+    <td><strong>3.03 ns<br><small>(7.64×)</small></strong></td>
+    <td>22.52 ns</td>
+    <td><strong>3.09 ns<br><small>(7.29×)</small></strong></td>
+  </tr>
+  <tr>
+    <td><strong>512</strong></td>
+    <td>178.64 ns</td>
+    <td>25.06 ns<br><small>(7.13×)</small></td>
+    <td><strong>10.40 ns<br><small>(17.18×)</small></strong></td>
+    <td>133.28 ns</td>
+    <td><strong>23.06 ns<br><small>(5.78×)</small></strong></td>
+  </tr>
+  <tr>
+    <td><strong>2048</strong></td>
+    <td>749.78 ns</td>
+    <td>71.05 ns<br><small>(10.55×)</small></td>
+    <td><strong>36.73 ns<br><small>(20.41×)</small></strong></td>
+    <td>553.49 ns</td>
+    <td><strong>80.25 ns<br><small>(6.90×)</small></strong></td>
+  </tr>
+  <tr>
+    <td><strong>8192</strong></td>
+    <td>2.99 µs</td>
+    <td>348.27 ns<br><small>(8.58×)</small></td>
+    <td><strong>124.17 ns<br><small>(24.06×)</small></strong></td>
+    <td>2.07 µs</td>
+    <td><strong>323.90 ns<br><small>(6.40×)</small></strong></td>
+  </tr>
+  <tr>
+    <td><strong>32768</strong></td>
+    <td>12.02 µs</td>
+    <td>1.43 µs<br><small>(8.41×)</small></td>
+    <td><strong>672.17 ns<br><small>(17.88×)</small></strong></td>
+    <td>7.97 µs</td>
+    <td><strong>1.72 µs<br><small>(4.62×)</small></strong></td>
+  </tr>
+</table>
+
+
+### Performance Dashboard
+**Top Left: *Latency (P95) vs. Feature Size***- Latency (ns) for Scalar FP32, AVX FP32, and AVX Q8.8.
+
+**Top Right: *Speedup vs. Feature Size***- Speedup relative to Scalar FP32 achieved by AVX FP32 and AVX Q8.8.
+
+**Bottom Left: *Error (P95) vs. Feature Size***- Asolute error of the different implementations.
+
+**Bottom Right: *Speedup vs. Error***- Relationship between performance and error.
+
 <div align="center">
-
-#### **Speedup Comparison (P95)**
-| Feature Size | AVX Q8.8 vs. Scalar | AVX FP32 vs. Scalar | AVX Q8.8 vs. AVX FP32 |
-|-----------------|---------------------------------|--------------------------------|--------------------------------|
-| 32  | 4.8x  | 3.41x  | 1.41x  |
-| 64  | 9.16x  | 5.6x  | 1.64x  |
-| 1024  | 16.12x  | 8.8x  | 1.83x  |
-| 4096  | 23.2x  | <span style="color:green"> **10.16x** </span> | 2.28x |
-| 8192  | <span style="color:green"> **24.27x** </span>  | 8.57x  | <span style="color:green"> **2.83x** </span>|
-| 16384  | 18.36x  | 8.56x  | 2.15x  |
-| 32768  | 18.06x | 8.51x  | 2.12x  |
-
-![speedupGraph](./images/speedupGraph.png)
-
+  <img src="./images/dashboardGraph.png" alt="Performance Dashboard Graph">
 </div>
 
 ---
->**Note**: Here each inference run is executed only once to prevent error accumulation.
-
-<div align="center">
-
-#### **Absolute Error Comparison (P95)**
-| **Feature Size** | **AVX Q8.8 vs. Scalar** | AVX FP32 vs. Scalar |
-|-----------------|----------------------------------|----------------------------------|
-| 32  |  5.36e-3 | 2.38e-3  |
-| 64  | 1.01e-2  |  <span style="color:red">  **9.84e-3**  </span> |
-| 1024  | 1.40e-2  | 8.79e-3  |
-| 4096  | 1.44e-2 | 4.65e-3  |
-| 8192  | 1.34e-2  | 2.72e-3 |
-| 16384  | 1.20e-2  | 1.91e-3 |
-| 32768  |  <span style="color:red">  **3.95e-2** </span> | 5.32e-3  |
-
-![errorGraph](./images/errorGraph.png)
-
-</div>
-
-
+> **Notes:**   
+> The Feature Size is on a log scale.  
+> For the Error benchmark, each run is executed only once to prevent error accumulation.
