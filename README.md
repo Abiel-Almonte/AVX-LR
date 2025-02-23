@@ -17,69 +17,70 @@ Unlike the naive scalar approach, AVX-LR maintains sub-microsecond performance e
 > **Note:** The 95th percentile (**P95**) represents the worst-case latency for 95% of inference runs. Each individual run is averaged over multiple executions to minimize measurement overhead.
 
 ### Latency Comparison (P95)
-<table>
-  <tr>
-    <th rowspan="2">Feature Size</th>
-    <th colspan="3">Inference Benchmark</th>
-    <th colspan="2">SGD Benchmark</th>
-  </tr>
-  <tr>
-    <th>Scalar FP32</th>
-    <th>AVX FP32</th>
-    <th>AVX Q8.8</th>
-    <th>Scalar FP32</th>
-    <th>AVX FP32</th>
-  </tr>
-  <tr>
-    <td><strong>32</strong></td>
-    <td>10.48 ns</td>
-    <td>2.63 ns<br><small>(3.98×)</small></td>
-    <td><strong>1.99 ns<br><small>(5.27×)</small></strong></td>
-    <td>8.53 ns</td>
-    <td><strong>2.14 ns<br><small>(3.99×)</small></strong></td>
-  </tr>
-  <tr>
-    <td><strong>64</strong></td>
-    <td>23.14 ns</td>
-    <td>3.46 ns<br><small>(6.69×)</small></td>
-    <td><strong>3.03 ns<br><small>(7.64×)</small></strong></td>
-    <td>22.52 ns</td>
-    <td><strong>3.09 ns<br><small>(7.29×)</small></strong></td>
-  </tr>
-  <tr>
-    <td><strong>512</strong></td>
-    <td>178.64 ns</td>
-    <td>25.06 ns<br><small>(7.13×)</small></td>
-    <td><strong>10.40 ns<br><small>(17.18×)</small></strong></td>
-    <td>133.28 ns</td>
-    <td><strong>23.06 ns<br><small>(5.78×)</small></strong></td>
-  </tr>
-  <tr>
-    <td><strong>2048</strong></td>
-    <td>749.78 ns</td>
-    <td>71.05 ns<br><small>(10.55×)</small></td>
-    <td><strong>36.73 ns<br><small>(20.41×)</small></strong></td>
-    <td>553.49 ns</td>
-    <td><strong>80.25 ns<br><small>(6.90×)</small></strong></td>
-  </tr>
-  <tr>
-    <td><strong>8192</strong></td>
-    <td>2.99 µs</td>
-    <td>348.27 ns<br><small>(8.58×)</small></td>
-    <td><strong>124.17 ns<br><small>(24.06×)</small></strong></td>
-    <td>2.07 µs</td>
-    <td><strong>323.90 ns<br><small>(6.40×)</small></strong></td>
-  </tr>
-  <tr>
-    <td><strong>32768</strong></td>
-    <td>12.02 µs</td>
-    <td>1.43 µs<br><small>(8.41×)</small></td>
-    <td><strong>672.17 ns<br><small>(17.88×)</small></strong></td>
-    <td>7.97 µs</td>
-    <td><strong>1.72 µs<br><small>(4.62×)</small></strong></td>
-  </tr>
-</table>
-
+<div align="center">
+  <table>
+    <tr>
+      <th rowspan="2">Feature Size</th>
+      <th colspan="3">Inference Benchmark</th>
+      <th colspan="2">SGD Benchmark</th>
+    </tr>
+    <tr>
+      <th>Scalar FP32</th>
+      <th>AVX FP32</th>
+      <th>AVX Q8.8</th>
+      <th>Scalar FP32</th>
+      <th>AVX FP32</th>
+    </tr>
+    <tr>
+      <td><strong>32</strong></td>
+      <td>10.48 ns</td>
+      <td>2.63 ns<br><small>(3.98×)</small></td>
+      <td><strong>1.99 ns<br><small>(5.27×)</small></strong></td>
+      <td>8.53 ns</td>
+      <td><strong>2.14 ns<br><small>(3.99×)</small></strong></td>
+    </tr>
+    <tr>
+      <td><strong>64</strong></td>
+      <td>23.14 ns</td>
+      <td>3.46 ns<br><small>(6.69×)</small></td>
+      <td><strong>3.03 ns<br><small>(7.64×)</small></strong></td>
+      <td>22.52 ns</td>
+      <td><strong>3.09 ns<br><small>(7.29×)</small></strong></td>
+    </tr>
+    <tr>
+      <td><strong>512</strong></td>
+      <td>178.64 ns</td>
+      <td>25.06 ns<br><small>(7.13×)</small></td>
+      <td><strong>10.40 ns<br><small>(17.18×)</small></strong></td>
+      <td>133.28 ns</td>
+      <td><strong>23.06 ns<br><small>(5.78×)</small></strong></td>
+    </tr>
+    <tr>
+      <td><strong>2048</strong></td>
+      <td>749.78 ns</td>
+      <td>71.05 ns<br><small>(10.55×)</small></td>
+      <td><strong>36.73 ns<br><small>(20.41×)</small></strong></td>
+      <td>553.49 ns</td>
+      <td><strong>80.25 ns<br><small>(6.90×)</small></strong></td>
+    </tr>
+    <tr>
+      <td><strong>8192</strong></td>
+      <td>2.99 µs</td>
+      <td>348.27 ns<br><small>(8.58×)</small></td>
+      <td><strong>124.17 ns<br><small>(24.06×)</small></strong></td>
+      <td>2.07 µs</td>
+      <td><strong>323.90 ns<br><small>(6.40×)</small></strong></td>
+    </tr>
+    <tr>
+      <td><strong>32768</strong></td>
+      <td>12.02 µs</td>
+      <td>1.43 µs<br><small>(8.41×)</small></td>
+      <td><strong>672.17 ns<br><small>(17.88×)</small></strong></td>
+      <td>7.97 µs</td>
+      <td><strong>1.72 µs<br><small>(4.62×)</small></strong></td>
+    </tr>
+  </table>
+</div>
 
 ### Performance Dashboard
 **Top Left: *Latency (P95) vs. Feature Size***- Latency (ns) for Scalar FP32, AVX FP32, and AVX Q8.8.
